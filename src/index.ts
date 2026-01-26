@@ -25,7 +25,8 @@ async function main() {
 
   console.log("✓ UI repository detected\n");
 
-  const token = await input({
+  const tokenArg = process.argv[2]?.trim();
+  const token = tokenArg || await input({
     message: "Paste JWT token:",
     validate: (value) => {
       if (!value.trim()) {
@@ -35,6 +36,7 @@ async function main() {
     },
   });
 
+  const currentPath = resolve(process.cwd());
   const worktrees = getWorktrees();
 
   if (worktrees.length === 0) {
@@ -42,9 +44,15 @@ async function main() {
     process.exit(1);
   }
 
+  const sortedWorktrees = worktrees.sort((a, b) => {
+    if (a.path === currentPath) return -1;
+    if (b.path === currentPath) return 1;
+    return 0;
+  });
+
   const selectedWorktree = await select({
     message: "Select worktree:",
-    choices: worktrees.map((wt) => ({
+    choices: sortedWorktrees.map((wt) => ({
       name: wt.name,
       value: wt.path,
     })),
