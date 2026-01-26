@@ -4,12 +4,17 @@
   "description": "CLI tool to manage JWT tokens across UI worktrees",
   "type": "module",
   "bin": {
-    "ill-token": "./dist/index.js"
+    "ill-token": "dist/index.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "start": "tsx src/index.ts",
-    "dev": "tsx watch src/index.ts"
+    "dev": "tsx watch src/index.ts",
+    "prepublishOnly": "npm run build",
+    "publish:public": "npm publish --access public"
   },
   "keywords": ["jwt", "token", "cli"],
   "author": "",
