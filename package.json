@@ -1,6 +1,6 @@
 {
   "name": "ill-token",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "CLI tool to manage JWT tokens across UI worktrees",
   "type": "module",
   "bin": {
@@ -16,7 +16,11 @@
     "prepublishOnly": "npm run build",
     "publish:public": "npm publish --access public"
   },
-  "keywords": ["jwt", "token", "cli"],
+  "keywords": [
+    "jwt",
+    "token",
+    "cli"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {

@@ -44,19 +44,26 @@ async function main() {
     process.exit(1);
   }
 
-  const sortedWorktrees = worktrees.sort((a, b) => {
-    if (a.path === currentPath) return -1;
-    if (b.path === currentPath) return 1;
-    return 0;
-  });
+  let selectedWorktree: string;
 
-  const selectedWorktree = await select({
-    message: "Select worktree:",
-    choices: sortedWorktrees.map((wt) => ({
-      name: wt.name,
-      value: wt.path,
-    })),
-  });
+  if (worktrees.length === 1) {
+    selectedWorktree = worktrees[0].path;
+    console.log(`✓ Auto-selected worktree: ${worktrees[0].name}\n`);
+  } else {
+    const sortedWorktrees = worktrees.sort((a, b) => {
+      if (a.path === currentPath) return -1;
+      if (b.path === currentPath) return 1;
+      return 0;
+    });
+
+    selectedWorktree = await select({
+      message: "Select worktree:",
+      choices: sortedWorktrees.map((wt) => ({
+        name: wt.name,
+        value: wt.path,
+      })),
+    });
+  }
 
   const environment = await select<Environment>({
     message: "Select environment:",
