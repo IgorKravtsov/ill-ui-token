@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { input, select } from "@inquirer/prompts";
+import { checkbox, input, select } from "@inquirer/prompts";
 import { execSync } from "child_process";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { join, resolve } from "path";
@@ -17,7 +17,7 @@ async function main() {
 
   if (!existsSync(apiClientPath)) {
     console.error(
-      "❌ Error: Not a UI repository. Please run from a UI worktree."
+      "❌ Error: Not a UI repository. Please run from a UI worktree.",
     );
     console.error("   Expected file not found: src/lib/api-client.ts");
     process.exit(1);
@@ -26,15 +26,17 @@ async function main() {
   console.log("✓ UI repository detected\n");
 
   const tokenArg = process.argv[2]?.trim();
-  const token = tokenArg || await input({
-    message: "Paste JWT token:",
-    validate: (value) => {
-      if (!value.trim()) {
-        return "Token cannot be empty";
-      }
-      return true;
-    },
-  });
+  const token =
+    tokenArg ||
+    (await input({
+      message: "Paste JWT token:",
+      validate: (value) => {
+        if (!value.trim()) {
+          return "Token cannot be empty";
+        }
+        return true;
+      },
+    }));
 
   const currentPath = resolve(process.cwd());
   const worktrees = getWorktrees();
@@ -44,10 +46,10 @@ async function main() {
     process.exit(1);
   }
 
-  let selectedWorktree: string;
+  let selectedWorktrees: string[];
 
   if (worktrees.length === 1) {
-    selectedWorktree = worktrees[0].path;
+    selectedWorktrees = [worktrees[0].path];
     console.log(`✓ Auto-selected worktree: ${worktrees[0].name}\n`);
   } else {
     const sortedWorktrees = worktrees.sort((a, b) => {
@@ -56,13 +58,18 @@ async function main() {
       return 0;
     });
 
-    selectedWorktree = await select({
-      message: "Select worktree:",
+    selectedWorktrees = await checkbox({
+      message: "Select worktrees (space to toggle, enter to confirm):",
       choices: sortedWorktrees.map((wt) => ({
         name: wt.name,
         value: wt.path,
       })),
     });
+
+    if (selectedWorktrees.length === 0) {
+      console.error("❌ Error: No worktrees selected");
+      process.exit(1);
+    }
   }
 
   const environment = await select<Environment>({
@@ -74,10 +81,14 @@ async function main() {
     ],
   });
 
-  updateFiles({ worktreePath: selectedWorktree, token, environment });
+  for (const worktreePath of selectedWorktrees) {
+    console.log(`\n📁 Updating ${worktreePath}...`);
+    updateFiles({ worktreePath, token, environment });
+  }
 
   console.log("\n✓ Token and environment updated successfully!");
-  console.log(`  Worktree: ${selectedWorktree}`);
+  console.log(`  Worktrees: ${selectedWorktrees.length}`);
+  selectedWorktrees.forEach((wt) => console.log(`    - ${wt}`));
   console.log(`  Environment: ${environment}`);
 }
 
@@ -138,11 +149,12 @@ function updateApiClient({
 
   let content = readFileSync(filePath, "utf-8");
 
-  const bearerRegex = /(config\.headers\.Authorization\s*=\s*`Bearer\s+)[^`]+(`;)/;
+  const bearerRegex =
+    /(config\.headers\.Authorization\s*=\s*`Bearer\s+)[^`]+(`;)/;
 
   if (!bearerRegex.test(content)) {
     console.error(
-      `❌ Error: Could not find Bearer token pattern in ${filePath}`
+      `❌ Error: Could not find Bearer token pattern in ${filePath}`,
     );
     process.exit(1);
   }
@@ -174,7 +186,7 @@ function updateUtils({
 
   if (!localhostRegex.test(content)) {
     console.error(
-      `❌ Error: Could not find localhost environment pattern in ${filePath}`
+      `❌ Error: Could not find localhost environment pattern in ${filePath}`,
     );
     process.exit(1);
   }
