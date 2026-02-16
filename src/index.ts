@@ -17,7 +17,7 @@ async function main() {
 
   if (!existsSync(apiClientPath)) {
     console.error(
-      "❌ Error: Not a UI repository. Please run from a UI worktree."
+      "❌ Error: Not a UI repository. Please run from a UI worktree.",
     );
     console.error("   Expected file not found: src/lib/api-client.ts");
     process.exit(1);
@@ -26,15 +26,17 @@ async function main() {
   console.log("✓ UI repository detected\n");
 
   const tokenArg = process.argv[2]?.trim();
-  const token = tokenArg || await input({
-    message: "Paste JWT token:",
-    validate: (value) => {
-      if (!value.trim()) {
-        return "Token cannot be empty";
-      }
-      return true;
-    },
-  });
+  const token =
+    tokenArg ||
+    (await input({
+      message: "Paste JWT token:",
+      validate: (value) => {
+        if (!value.trim()) {
+          return "Token cannot be empty";
+        }
+        return true;
+      },
+    }));
 
   const currentPath = resolve(process.cwd());
   const worktrees = getWorktrees();
@@ -147,11 +149,12 @@ function updateApiClient({
 
   let content = readFileSync(filePath, "utf-8");
 
-  const bearerRegex = /(config\.headers\.Authorization\s*=\s*`Bearer\s+)[^`]+(`;)/;
+  const bearerRegex =
+    /(config\.headers\.Authorization\s*=\s*`Bearer\s+)[^`]+(`;)/;
 
   if (!bearerRegex.test(content)) {
     console.error(
-      `❌ Error: Could not find Bearer token pattern in ${filePath}`
+      `❌ Error: Could not find Bearer token pattern in ${filePath}`,
     );
     process.exit(1);
   }
@@ -183,7 +186,7 @@ function updateUtils({
 
   if (!localhostRegex.test(content)) {
     console.error(
-      `❌ Error: Could not find localhost environment pattern in ${filePath}`
+      `❌ Error: Could not find localhost environment pattern in ${filePath}`,
     );
     process.exit(1);
   }
