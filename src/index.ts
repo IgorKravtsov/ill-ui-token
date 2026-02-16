@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { input, select } from "@inquirer/prompts";
+import { checkbox, input, select } from "@inquirer/prompts";
 import { execSync } from "child_process";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { join, resolve } from "path";
@@ -44,10 +44,10 @@ async function main() {
     process.exit(1);
   }
 
-  let selectedWorktree: string;
+  let selectedWorktrees: string[];
 
   if (worktrees.length === 1) {
-    selectedWorktree = worktrees[0].path;
+    selectedWorktrees = [worktrees[0].path];
     console.log(`✓ Auto-selected worktree: ${worktrees[0].name}\n`);
   } else {
     const sortedWorktrees = worktrees.sort((a, b) => {
@@ -56,13 +56,18 @@ async function main() {
       return 0;
     });
 
-    selectedWorktree = await select({
-      message: "Select worktree:",
+    selectedWorktrees = await checkbox({
+      message: "Select worktrees (space to toggle, enter to confirm):",
       choices: sortedWorktrees.map((wt) => ({
         name: wt.name,
         value: wt.path,
       })),
     });
+
+    if (selectedWorktrees.length === 0) {
+      console.error("❌ Error: No worktrees selected");
+      process.exit(1);
+    }
   }
 
   const environment = await select<Environment>({
@@ -74,10 +79,14 @@ async function main() {
     ],
   });
 
-  updateFiles({ worktreePath: selectedWorktree, token, environment });
+  for (const worktreePath of selectedWorktrees) {
+    console.log(`\n📁 Updating ${worktreePath}...`);
+    updateFiles({ worktreePath, token, environment });
+  }
 
   console.log("\n✓ Token and environment updated successfully!");
-  console.log(`  Worktree: ${selectedWorktree}`);
+  console.log(`  Worktrees: ${selectedWorktrees.length}`);
+  selectedWorktrees.forEach((wt) => console.log(`    - ${wt}`));
   console.log(`  Environment: ${environment}`);
 }
 
