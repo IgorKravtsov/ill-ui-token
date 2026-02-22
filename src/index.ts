@@ -4,12 +4,17 @@ import { checkbox, input, select } from "@inquirer/prompts";
 import { execSync } from "child_process";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { join, resolve } from "path";
+import { emitKeypressEvents } from "readline";
 
 type Environment = "dev" | "qa" | "prod";
 
 interface Worktree {
   path: string;
   name: string;
+}
+
+interface Keypress {
+  name?: string;
 }
 
 async function main() {
@@ -58,17 +63,54 @@ async function main() {
       return 0;
     });
 
-    selectedWorktrees = await checkbox({
-      message: "Select worktrees (space to toggle, enter to confirm):",
-      choices: sortedWorktrees.map((wt) => ({
-        name: wt.name,
-        value: wt.path,
-      })),
-    });
+    let activeWorktreeIndex = 0;
+    emitKeypressEvents(process.stdin);
+
+    const onKeypress = (_value: string, key: Keypress) => {
+      if (key.name === "up") {
+        activeWorktreeIndex =
+          (activeWorktreeIndex - 1 + sortedWorktrees.length) %
+          sortedWorktrees.length;
+      }
+
+      if (key.name === "down") {
+        activeWorktreeIndex =
+          (activeWorktreeIndex + 1) % sortedWorktrees.length;
+      }
+
+      if (key.name && /^\d$/.test(key.name)) {
+        const numericIndex = Number(key.name) - 1;
+
+        if (numericIndex >= 0 && numericIndex < sortedWorktrees.length) {
+          activeWorktreeIndex = numericIndex;
+        }
+      }
+    };
+
+    process.stdin.on("keypress", onKeypress);
+
+    try {
+      selectedWorktrees = await checkbox({
+        message: "Select worktrees (space to toggle, enter to confirm):",
+        choices: sortedWorktrees.map((wt) => ({
+          name: wt.name,
+          value: wt.path,
+        })),
+      });
+    } finally {
+      process.stdin.removeListener("keypress", onKeypress);
+    }
 
     if (selectedWorktrees.length === 0) {
-      console.error("❌ Error: No worktrees selected");
-      process.exit(1);
+      const fallbackWorktree = sortedWorktrees[activeWorktreeIndex];
+
+      if (!fallbackWorktree) {
+        console.error("❌ Error: No worktrees selected");
+        process.exit(1);
+      }
+
+      selectedWorktrees = [fallbackWorktree.path];
+      console.log(`✓ Auto-selected worktree: ${fallbackWorktree.name}\n`);
     }
   }
 

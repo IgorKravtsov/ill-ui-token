@@ -1,6 +1,6 @@
 {
   "name": "ill-token",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "CLI tool to manage JWT tokens across UI worktrees",
   "type": "module",
   "bin": {
