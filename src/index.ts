@@ -117,8 +117,8 @@ async function main() {
   const environment = await select<Environment>({
     message: "Select environment:",
     choices: [
-      { name: "dev", value: "dev" },
       { name: "qa", value: "qa" },
+      { name: "dev", value: "dev" },
       { name: "prod", value: "prod" },
     ],
   });
