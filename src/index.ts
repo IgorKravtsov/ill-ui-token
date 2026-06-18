@@ -229,26 +229,10 @@ function createUiRepositoryHandler() {
         updateFiles({ worktreePath, token, environment });
       }
 
-      const iosRepoPath = join(dirname(repositoryPath), "iOS");
-      const iosApiPath = join(iosRepoPath, "app/services/api/api.ts");
-      let iosUpdated = false;
-
-      if (existsSync(iosApiPath)) {
-        console.log(`\n📱 Updating ${iosRepoPath}...`);
-        updateIosApiToken({ iosRepoPath, token });
-        iosUpdated = true;
-      } else {
-        console.log(`\n✓ iOS repository not found, skipped: ${iosRepoPath}`);
-      }
-
       console.log("\n✓ Token and environment updated successfully!");
       console.log(`  Worktrees: ${selectedWorktrees.length}`);
       selectedWorktrees.forEach((wt) => console.log(`    - ${wt}`));
       console.log(`  Environment: ${environment}`);
-
-      if (iosUpdated) {
-        console.log(`  iOS: ${iosRepoPath}`);
-      }
     },
   } satisfies RepositoryHandler;
 }
@@ -321,14 +305,6 @@ function getWorktrees({
   });
 
   return worktrees;
-}
-
-function getIosRepoPath({
-  uiGitRoot,
-}: {
-  uiGitRoot: string;
-}) {
-  return join(dirname(uiGitRoot), "iOS");
 }
 
 function updateFiles({
